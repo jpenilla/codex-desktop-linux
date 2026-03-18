@@ -23,7 +23,6 @@ Linux launcher defaults:
 - on Wayland, it prefers `--ozone-platform=x11` when XWayland is available
 - it uses hardware GL by default
 - `CODEX_LINUX_SOFTWARE_GL=1` switches back to the slower SwiftShader software fallback
-- it keeps Electron config, data, cache, and state under `.codex-linux/xdg/`
 - it reapplies the repo's Linux patch level automatically and closes any old shim instance before relaunching
 - override with `CODEX_LINUX_SOFTWARE_GL=1` and/or `CODEX_LINUX_OZONE_PLATFORM=wayland`
 

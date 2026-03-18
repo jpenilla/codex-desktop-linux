@@ -5,7 +5,6 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 RUNTIME_DIR="$ROOT_DIR/.codex-linux/runtime/node_modules/electron/dist"
 ELECTRON_BIN="$RUNTIME_DIR/electron"
 METADATA_PATH="$ROOT_DIR/.codex-linux/metadata.json"
-XDG_ROOT="$ROOT_DIR/.codex-linux/xdg"
 SESSION_TYPE=${XDG_SESSION_TYPE:-}
 DISPLAY_SOCKET=${DISPLAY:-}
 WAYLAND_SOCKET=${WAYLAND_DISPLAY:-}
@@ -33,11 +32,6 @@ if [ ! -x "$ELECTRON_BIN" ] || [ ! -f "$RUNTIME_DIR/resources/app.asar" ] || [ !
 fi
 
 export ELECTRON_FORCE_IS_PACKAGED=${ELECTRON_FORCE_IS_PACKAGED:-1}
-export XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$XDG_ROOT/config}
-export XDG_DATA_HOME=${XDG_DATA_HOME:-$XDG_ROOT/data}
-export XDG_STATE_HOME=${XDG_STATE_HOME:-$XDG_ROOT/state}
-export XDG_CACHE_HOME=${XDG_CACHE_HOME:-$XDG_ROOT/cache}
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
 
 if [ "${CODEX_LINUX_SOFTWARE_GL:-0}" = "1" ]; then
   export LIBGL_ALWAYS_SOFTWARE=${LIBGL_ALWAYS_SOFTWARE:-1}

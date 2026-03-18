@@ -1,0 +1,9 @@
+{
+  "name": "codex-desktop-linux",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install-codex-linux": "bun run ./tools/install-codex-linux.ts",
+    "launch": "./launch-codex-linux.sh"
+  }
+}

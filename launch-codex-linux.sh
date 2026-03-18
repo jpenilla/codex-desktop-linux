@@ -5,7 +5,6 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 RUNTIME_DIR="$ROOT_DIR/.codex-linux/runtime/node_modules/electron/dist"
 ELECTRON_BIN="$RUNTIME_DIR/electron"
 METADATA_PATH="$ROOT_DIR/.codex-linux/metadata.json"
-PATCH_VERSION=2
 XDG_ROOT="$ROOT_DIR/.codex-linux/xdg"
 SESSION_TYPE=${XDG_SESSION_TYPE:-}
 DISPLAY_SOCKET=${DISPLAY:-}
@@ -21,12 +20,16 @@ if ! command -v rg >/dev/null 2>&1; then
   exit 127
 fi
 
-if [ ! -x "$ELECTRON_BIN" ] || [ ! -f "$RUNTIME_DIR/resources/app.asar" ] || [ ! -f "$METADATA_PATH" ] || ! grep -q "\"linuxPatchVersion\": $PATCH_VERSION" "$METADATA_PATH"; then
-  if ! command -v bun >/dev/null 2>&1; then
-    echo "bun is required to install the Linux runtime for Codex." >&2
-    exit 127
-  fi
-  bun run install-codex-linux
+if ! command -v bun >/dev/null 2>&1; then
+  echo "bun is required to check for Codex updates and launch the Linux runtime." >&2
+  exit 127
+fi
+
+bun run install-codex-linux
+
+if [ ! -x "$ELECTRON_BIN" ] || [ ! -f "$RUNTIME_DIR/resources/app.asar" ] || [ ! -f "$METADATA_PATH" ]; then
+  echo "Codex Linux runtime is missing after the install step." >&2
+  exit 1
 fi
 
 export ELECTRON_FORCE_IS_PACKAGED=${ELECTRON_FORCE_IS_PACKAGED:-1}

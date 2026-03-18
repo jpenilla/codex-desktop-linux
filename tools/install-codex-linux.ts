@@ -6,6 +6,7 @@ const stateDir = join(repoRoot, ".codex-linux");
 const downloadDir = join(stateDir, "downloads");
 const extractDir = join(stateDir, "upstream");
 const runtimeDir = join(stateDir, "runtime");
+const electronDistDir = join(runtimeDir, "node_modules", "electron", "dist");
 const runtimeResourcesDir = join(runtimeDir, "node_modules", "electron", "dist", "resources");
 const tmpDir = join(stateDir, "tmp");
 const bunCacheDir = join(stateDir, "bun-cache");
@@ -81,6 +82,18 @@ async function main() {
     });
   } else {
     console.log(`Reusing cached download at ${relativeToRepo(dmgPath)}`);
+  }
+
+  if (
+    !shouldDownload &&
+    isRuntimeCurrent({
+      dmgUrl,
+      etag: remoteMetadata.etag,
+      lastModified: remoteMetadata.lastModified
+    })
+  ) {
+    console.log("Codex Linux runtime is already up to date.");
+    return;
   }
 
   console.log("Extracting app resources from the macOS bundle");
@@ -342,6 +355,33 @@ function readDownloadMetadata(): DownloadMetadata | null {
 
 function writeDownloadMetadata(metadata: DownloadMetadata) {
   writeFileSync(downloadMetadataPath, `${JSON.stringify(metadata, null, 2)}\n`);
+}
+
+function readInstallMetadata(): InstallMetadata | null {
+  if (!existsSync(metadataPath)) {
+    return null;
+  }
+
+  return readJson(metadataPath) as InstallMetadata;
+}
+
+function isRuntimeCurrent(expected: DownloadMetadata) {
+  const installMetadata = readInstallMetadata();
+  if (!installMetadata) {
+    return false;
+  }
+
+  return (
+    installMetadata.linuxPatchVersion === linuxPatchVersion &&
+    installMetadata.dmgUrl === expected.dmgUrl &&
+    installMetadata.etag === expected.etag &&
+    installMetadata.lastModified === expected.lastModified &&
+    existsSync(join(electronDistDir, "electron")) &&
+    existsSync(join(runtimeResourcesDir, "app.asar")) &&
+    existsSync(join(runtimeResourcesDir, "app.asar.unpacked")) &&
+    existsSync(join(runtimeResourcesDir, "codex")) &&
+    existsSync(join(runtimeResourcesDir, "rg"))
+  );
 }
 
 function readInstalledVersion(path: string) {

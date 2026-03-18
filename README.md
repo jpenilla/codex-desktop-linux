@@ -19,6 +19,7 @@ bun run install-codex-linux
 
 Linux launcher defaults:
 
+- it checks for a newer Codex DMG on every launch and reuses the cached download unless the upstream URL or freshness metadata changed
 - on Wayland, it prefers `--ozone-platform=x11` when XWayland is available
 - it uses hardware GL by default
 - `CODEX_LINUX_SOFTWARE_GL=1` switches back to the slower SwiftShader software fallback

@@ -15,7 +15,7 @@ const downloadMetadataPath = join(downloadDir, "Codex.dmg.metadata.json");
 const metadataPath = join(stateDir, "metadata.json");
 const defaultDmgUrl = "https://persistent.oaistatic.com/codex-app-prod/Codex.dmg";
 const rebuildVersion = "4.0.3";
-const linuxPatchVersion = 2;
+const linuxPatchVersion = 5;
 
 type InstallMetadata = {
   appVersion: string;
@@ -43,7 +43,7 @@ type AsarEntry = {
 
 type TextPatchRule = {
   name: string;
-  replace: string;
+  replace: string | RegExp;
   with: string;
   required?: boolean;
 };
@@ -215,19 +215,14 @@ function patchRuntimeAppAsar() {
     },
     {
       name: "linux-electron-opaque-class",
-      replace: "if(C.opaqueWindows){e.classList.add(`electron-opaque`);return}e.classList.remove(`electron-opaque`)",
-      with: "if(C.opaqueWindows||e.dataset.codexOs===`linux`){e.classList.add(`electron-opaque`);return}e.classList.remove(`electron-opaque`)"
+      replace:
+        /if\((\w+)\.opaqueWindows&&!(\w+)\(\)\)\{e\.classList\.add\(`electron-opaque`\);return\}e\.classList\.remove\(`electron-opaque`\)/g,
+      with: "if(($1.opaqueWindows||document.documentElement.dataset.codexOs===`linux`)&&!$2()){e.classList.add(`electron-opaque`);return}e.classList.remove(`electron-opaque`)"
     },
     {
       name: "linux-electron-background-opacity",
       replace: "background:color-mix(in srgb,var(--color-token-editor-background)55%,transparent)",
       with: "background:var(--color-token-editor-background)"
-    },
-    {
-      name: "linux-thread-overlay-background",
-      replace: "r.opaqueWindows&&`bg-token-bg-primary`",
-      with: "(r.opaqueWindows||document.documentElement.dataset.codexOs===`linux`)&&`bg-token-bg-primary`",
-      required: false
     }
   ];
   const matchCounts = new Map<string, number>();
@@ -250,14 +245,16 @@ function patchRuntimeAppAsar() {
     return nextText === text ? null : nextText;
   });
 
-  const missingRules = patchRules.filter((rule) => rule.required !== false && (matchCounts.get(rule.name) ?? 0) === 0);
+  const missingRules = [...new Set(patchRules.map((rule) => rule.name))]
+    .filter((name) => patchRules.some((rule) => rule.name === name && rule.required !== false))
+    .filter((name) => (matchCounts.get(name) ?? 0) === 0);
   if (missingRules.length > 0) {
     throw new Error(`Could not apply Linux bundle patches: ${missingRules.map((rule) => rule.name).join(", ")}`);
   }
 
-  const summary = patchRules
-    .filter((rule) => (matchCounts.get(rule.name) ?? 0) > 0)
-    .map((rule) => `${rule.name} x${matchCounts.get(rule.name)}`)
+  const summary = [...new Set(patchRules.map((rule) => rule.name))]
+    .filter((name) => (matchCounts.get(name) ?? 0) > 0)
+    .map((name) => `${name} x${matchCounts.get(name)}`)
     .join(", ");
   console.log(`Applied Linux UI patches (${summary})`);
 }
@@ -532,7 +529,16 @@ function isTextEntryPath(entryPath: string) {
   return entryPath.endsWith(".css") || entryPath.endsWith(".js") || entryPath.endsWith(".json");
 }
 
-function replaceAllWithCount(text: string, search: string, replacement: string) {
+function replaceAllWithCount(text: string, search: string | RegExp, replacement: string) {
+  if (search instanceof RegExp) {
+    const globalSearch = search.global ? search : new RegExp(search.source, `${search.flags}g`);
+    const matches = Array.from(text.matchAll(globalSearch)).length;
+    return {
+      count: matches,
+      text: matches === 0 ? text : text.replace(globalSearch, replacement)
+    };
+  }
+
   const parts = text.split(search);
   return {
     count: parts.length - 1,

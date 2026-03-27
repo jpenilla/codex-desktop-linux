@@ -23,8 +23,9 @@ Linux launcher defaults:
 - on Wayland, it prefers `--ozone-platform=x11` when XWayland is available
 - it uses hardware GL by default
 - `CODEX_LINUX_SOFTWARE_GL=1` switches back to the slower SwiftShader software fallback
+- `CODEX_LINUX_WAYLAND_HINT=1` exports Electron's Wayland auto-detect hint when a Wayland socket is present
 - it reapplies the repo's Linux patch level automatically and closes any old shim instance before relaunching
-- override with `CODEX_LINUX_SOFTWARE_GL=1` and/or `CODEX_LINUX_OZONE_PLATFORM=wayland`
+- override with `CODEX_LINUX_SOFTWARE_GL=1`, `CODEX_LINUX_WAYLAND_HINT=1`, and/or `CODEX_LINUX_OZONE_PLATFORM=wayland`
 
 What the installer does:
 
